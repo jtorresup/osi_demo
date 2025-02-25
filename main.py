@@ -1,12 +1,12 @@
 from layers.physical import PhysicalLayer
-from layers.data_link import DataLinkLayer
+from layers.datalink import DataLinkLayer
 
 
 def main():
     physical = PhysicalLayer()
-    data_link = DataLinkLayer(physical.make_commander())
+    datalink = DataLinkLayer(physical.make_commander())
 
-    physical.listen(("127.0.0.1", 8080), data_link.receive)
+    physical.run(("127.0.0.1", 8080), datalink.receive)
 
 
 if __name__ == "__main__":
