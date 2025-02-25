@@ -1,39 +1,36 @@
-from __future__ import annotations
-
-import random
-from typing import Dict, List
+from array import array
 
 import layer_log as log
-from layers import physical
-from layers.physical import MAX_PORTS, PhysicalLayerCommander
+from utils import Bit
 
 
-MAX_FRAME_LEN = physical.MAX_RECIEVE // 2
-
-
-def generate_random_mac() -> bytes:
-    return random.randbytes(6)
-
-
-def get_mac_from_frame(frame: bytes) -> bytes:
-    pass
+MAX_FRAME_SIZE = 4  # in bytes
 
 
 class DataLinkLayer:
-    def __init__(self, physcmd: PhysicalLayerCommander):
-        self.physcmd = physcmd
-        self.topology: Dict[int, List[bytes]] = {
-            nth: [] for nth in range(MAX_PORTS)
-        }
+    name = "datalink"
+    framebuffer = array("B")
 
-    def receive(self, port_id: int, data: bytes):
-        log.info("data link", "received:", data)
+    def receive(self, bit: Bit):
+        self.framebuffer.append(bit)
+        if len(self.framebuffer) < MAX_FRAME_SIZE * 8:
+            return
 
-        # 1. Frame the data.
-        # 2. Get mac address in bytes.
-        # 3. If it's in the same port, then continue.
-        #    Else, check every mapped port if it is there.
-        #    Otherwise, append the mac to the list of port_id.
-        # 4. Send it up the OSI stack
+        frame = self.build_frame()
+        log.info(self.name, "frame:", frame)
 
-        return False
+        self.framebuffer.clear()
+
+    def build_frame(self) -> bytes:
+        frame = b""
+
+        self.framebuffer.reverse()  # little to big endian
+        for nth in range(0, MAX_FRAME_SIZE * 8, 8):
+            byte = self.framebuffer[nth:nth + 8]
+            buff = 0
+            for bit in byte:
+                buff <<= 1
+                buff += bit
+            frame += buff.to_bytes()
+
+        return frame

@@ -3,10 +3,10 @@ from layers.datalink import DataLinkLayer
 
 
 def main():
-    physical = PhysicalLayer()
-    datalink = DataLinkLayer(physical.make_commander())
+    phys = PhysicalLayer()
+    datalink = DataLinkLayer()
 
-    physical.run(("127.0.0.1", 8080), datalink.receive)
+    phys.run(("127.0.0.1", 5432), datalink.receive)
 
 
 if __name__ == "__main__":

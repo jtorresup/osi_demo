@@ -1,79 +1,39 @@
-from __future__ import annotations
-
 import socket
 from collections.abc import Callable
-from typing import List, Optional, Tuple
+from typing import Tuple
 
 import layer_log as log
+from utils import Bit
 
 
-MAX_RECIEVE = 1024
-MAX_PORTS = 4
-
-
-class PhysicalLayerCommander:
-    def __init__(self, physical: PhysicalLayer):
-        self.physical = physical
-
-    def send_to_port(self, port_id: int, data: bytes, close=False):
-        self.physical.conn.sendall(data)
-        if close:
-            self.physical.free_port(port_id)
-
-    def free_port(self, port_id: int):
-        self.physical.free_port(port_id)
+type ReceiveFn = Callable[[Bit], None]
 
 
 class PhysicalLayer:
-    def __init__(self):
-        self.ports: List[Optional[socket.socket]] = [
-            None for _ in range(MAX_PORTS)
-        ]
+    name = "physical"
 
-    def make_commander(self) -> PhysicalLayerCommander:
-        return PhysicalLayerCommander(self)
-
-    def free_port(self, port_id: int):
-        self.ports[port_id].close()
-        self.ports[port_id] = None
-
-    def allocate_port(self, conn: socket.sockset) -> Optional[int]:
-        for nth, port in enumerate(self.ports):
-            if port is None:
-                self.ports[nth] = conn
-                return nth
-
-        return None
-
-    def run(
-        self,
-        addr: Tuple[str, int],
-        receive_handler: Callable[[int, bytes], None],
-    ):
+    def run(self, addr: Tuple[str, int], handler: ReceiveFn):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.bind(addr)
-            sock.listen(MAX_PORTS)
-            log.info("physical", "listening at:", addr)
+            sock.listen(1)
+            log.info(self.name, "listening at:", addr)
 
             while True:
                 try:
                     conn, conn_addr = sock.accept()
+                    log.info(self.name, "connected:", conn_addr)
+                    with conn:
+                        self.handle_connection(conn, handler)
                 except KeyboardInterrupt:
                     break
 
-                port_id = self.allocate_port(conn)
-                if port_id is not None:
-                    log.info(
-                        "physical",
-                        f"address {conn_addr} connected to port {port_id}",
-                    )
-                else:
-                    log.warn("physical", "all ports in use")
+            log.info(self.name, "shutting down...")
 
-                for port in self.ports:
-                    if port is None:
-                        continue
-                    if data := port.recv(MAX_RECIEVE):
-                        receive_handler(port_id, data)
-
-            log.info("physical", "shutting down...")
+    def handle_connection(self, conn: socket.socket, handler: ReceiveFn):
+        while byte := conn.recv(1):
+            # simulate bit streaming
+            byte = int.from_bytes(byte)
+            for _ in range(8):
+                bit = byte & 1
+                handler(bit)
+                byte >>= 1

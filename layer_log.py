@@ -7,9 +7,17 @@ WARN_COLOR_FMT = "\x1b[33m%s\x1b[0m: %s"
 ERROR_COLOR_FMT = "\x1b[31m%s\x1b[0m: %s"
 
 
+def debug(layername: str, message: str, *args, **kwargs):
+    print(
+        LOG_LAYER_PREFIX_FMT % ("\x1b[32m", layername, "DEBUG", message),
+        *args,
+        **kwargs,
+    )
+
+
 def info(layername: str, message: str, *args, **kwargs):
     print(
-        LOG_LAYER_PREFIX_FMT % ("\x1b[32m", layername, "INFO", message),
+        LOG_LAYER_PREFIX_FMT % ("\x1b[34m", layername, "INFO", message),
         *args,
         **kwargs,
     )
