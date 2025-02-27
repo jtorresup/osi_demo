@@ -1,39 +1,55 @@
 import socket
 from collections.abc import Callable
-from typing import Tuple
+from typing import Dict, Tuple
 
 import layer_log as log
-from utils import Bit
+from common import Bit, Port
 
 
-type ReceiveFn = Callable[[Bit], None]
+NAME = "physical"
+
+
+type PhysicalReceiverFn = Callable[[Port, Bit], None]
 
 
 class PhysicalLayer:
-    name = "physical"
+    port_table: Dict[Port, socket.socket] = {}
 
-    def run(self, addr: Tuple[str, int], handler: ReceiveFn):
+    def run(self, addr: Tuple[str, int], receiver: PhysicalReceiverFn):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.bind(addr)
             sock.listen(1)
-            log.info(self.name, "listening at:", addr)
+            log.info(NAME, "listening at:", addr)
 
             while True:
                 try:
-                    conn, conn_addr = sock.accept()
-                    log.info(self.name, "connected:", conn_addr)
+                    conn, (_, port) = sock.accept()
                     with conn:
-                        self.handle_connection(conn, handler)
+                        self.handle_connection(conn, port, receiver)
                 except KeyboardInterrupt:
                     break
 
-            log.info(self.name, "shutting down...")
+            log.info(NAME, "shutting down...")
 
-    def handle_connection(self, conn: socket.socket, handler: ReceiveFn):
+    def handle_connection(
+        self,
+        conn: socket.socket,
+        port: Port,
+        receiver: PhysicalReceiverFn,
+    ):
+        self.port_table[port] = conn
+        log.info(NAME, "receiving bits from port", port)
         while byte := conn.recv(1):
             # simulate bit streaming
             byte = int.from_bytes(byte)
             for _ in range(8):
                 bit = byte & 1
-                handler(bit)
+                receiver(port, bit)
                 byte >>= 1
+
+    def send(self, port: Port, data: bytes):
+        conn = self.port_table[port]
+        try:
+            conn.sendall(data)
+        except ConnectionRefusedError:
+            del self.port_table[port]
