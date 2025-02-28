@@ -6,14 +6,14 @@ from collections.abc import Callable
 from typing import Dict, List
 
 import layer_log as log
-from common import Bit, Mac, NotEnoughBytes, Port
+from common import Bit, Mac, NotEnoughBytes, PhysicalPort
 
 
 NAME = "datalink"
 
 
 type DataLinkReceiverFn = Callable[[Mac, bytes], None]
-type DataLinkSenderFn = Callable[[Port, bytes], None]
+type DataLinkSenderFn = Callable[[PhysicalPort, bytes], None]
 
 
 class Frame:
@@ -90,14 +90,14 @@ class DataLinkLayer:
     def __init__(self):
         self.mac = Mac()
         self.framebuffer = array("B")
-        self.mac_table: Dict[Mac, Port] = {}
+        self.mac_table: Dict[Mac, PhysicalPort] = {}
         log.info(NAME, "generated mac:", self.mac)
 
     def set_link(self, receiver: DataLinkReceiverFn, sender: DataLinkSenderFn):
         self.receiver = receiver
         self.sender = sender
 
-    def receive(self, port: Port, bit: Bit):
+    def receive(self, port: PhysicalPort, bit: Bit):
         self.framebuffer.append(bit)
 
         try:

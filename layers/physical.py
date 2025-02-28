@@ -3,17 +3,17 @@ from collections.abc import Callable
 from typing import Dict, Tuple
 
 import layer_log as log
-from common import Bit, Port
+from common import Bit, PhysicalPort
 
 
 NAME = "physical"
 
 
-type PhysicalReceiverFn = Callable[[Port, Bit], None]
+type PhysicalReceiverFn = Callable[[PhysicalPort, Bit], None]
 
 
 class PhysicalLayer:
-    port_table: Dict[Port, socket.socket] = {}
+    port_table: Dict[PhysicalPort, socket.socket] = {}
 
     def run(self, addr: Tuple[str, int], receiver: PhysicalReceiverFn):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -34,7 +34,7 @@ class PhysicalLayer:
     def handle_connection(
         self,
         conn: socket.socket,
-        port: Port,
+        port: PhysicalPort,
         receiver: PhysicalReceiverFn,
     ):
         self.port_table[port] = conn
@@ -47,7 +47,7 @@ class PhysicalLayer:
                 receiver(port, bit)
                 byte >>= 1
 
-    def send(self, port: Port, data: bytes):
+    def send(self, port: PhysicalPort, data: bytes):
         conn = self.port_table[port]
         try:
             conn.sendall(data)

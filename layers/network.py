@@ -123,7 +123,7 @@ class NetworkLayer:
         match self.recv_state:
             case ReceiveState.HEADER:
                 header_length = (self.packet_buffer[0] << 4) >> 4
-                log.info(NAME, "header has size:", self.packet_size)
+                log.info(NAME, "header has size:", header_length)
                 if len(data) < (header_length * 32 // 8):
                     return
 

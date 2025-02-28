@@ -10,7 +10,7 @@ T = TypeVar("T")
 
 
 type Bit = int
-type Port = int
+type PhysicalPort = int
 
 
 class NotEnoughBytes(Exception):
