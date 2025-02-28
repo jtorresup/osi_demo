@@ -25,7 +25,7 @@ class ReceiveState(IntEnum):
 class Ip4Packet:
     VERSION = 4
     MAX_DATA_SIZE = 65475  # in bytes
-    HEADER_LENGTH = 5  # in 32-bit words
+    HEADER_LENGTH = 5  # in 32-bit words, min length, no options
 
     def __init__(self, inner: bytes):
         self.inner = inner
@@ -83,7 +83,7 @@ class Ip4Packet:
         )
         checksum = Ip4Packet.calc_checksum(header)
         header = (
-            header[:Ip4Packet.HEADER_LENGTH - 8]
+            header[:(Ip4Packet.HEADER_LENGTH * 32 // 8) - 8]
             + checksum
             + src_ip.to_bytes()
             + dst_ip.to_bytes()
