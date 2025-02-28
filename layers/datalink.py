@@ -74,7 +74,6 @@ class Frame:
         for ith in range(frame_count):
             ith = ith * Frame.MAX_BODY_SIZE
             inner = data[ith:ith + Frame.MAX_BODY_SIZE]
-            log.debug(NAME, ith, ith + Frame.MAX_BODY_SIZE, len(inner))
             padding = Frame.MAX_BODY_SIZE - len(inner)
             inner = inner + (b"\0" * padding)
             frames.append(Frame(dst_mac + src_mac + inner))

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import random
+from itertools import zip_longest
 from typing import Iterable, Iterator, TypeVar
 
 
@@ -65,4 +66,4 @@ def int_to_bytes(n: int, *args, **kwargs) -> bytes:
 def chunks(iterable: Iterable[T], n: int) -> Iterator[T]:
     iters = [iter(iterable)] * n
 
-    return zip(iters)
+    return zip_longest(*iters)

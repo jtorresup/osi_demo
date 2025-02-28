@@ -51,7 +51,9 @@ class Ip4Packet:
         packet_count = math.ceil(len(data) / Ip4Packet.MAX_DATA_SIZE)
         packets = []
 
-        for packet_data in chunks(data, packet_count):
+        for ith in range(packet_count):
+            ith = ith * Ip4Packet.MAX_DATA_SIZE
+            packet_data = data[ith:ith + Ip4Packet.MAX_DATA_SIZE]
             packet = Ip4Packet.build_one(dst_ip, src_ip, packet_data)
             packets.append(packet)
 
