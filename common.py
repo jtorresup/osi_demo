@@ -24,6 +24,12 @@ class Mac:
     def __repr__(self) -> str:
         return self.raw.hex(":")
 
+    def __eq__(self, o: Mac) -> bool:
+        return self.raw == o.raw
+
+    def __hash__(self) -> int:
+        return hash(self.raw)
+
     def to_bytes(self) -> bytes:
         return self.raw
 
@@ -40,6 +46,17 @@ class Ip4Addr:
 
     def __repr__(self) -> str:
         return str(self)
+
+    def __eq__(self, o: Ip4Addr) -> bool:
+        return (
+            self.a == o.a
+            and self.b == o.b
+            and self.c == o.c
+            and self.d == o.d
+        )
+
+    def __hash__(self) -> int:
+        return hash(self.to_bytes())
 
     def to_bytes(self) -> bytes:
         return (
