@@ -25,7 +25,6 @@ class ReceiveState(IntEnum):
 class Ip4Packet:
     VERSION = 4
     MAX_DATA_SIZE = 65475  # in bytes
-    HEADER_LENGTH = 5  # in 32-bit words, min length, no options
 
     def __init__(self, inner: bytes):
         self.inner = inner
@@ -65,11 +64,12 @@ class Ip4Packet:
 
     @staticmethod
     def build_one(dst_ip: Ip4Addr, src_ip: Ip4Addr, data: bytes) -> Ip4Packet:
+        HEADER_LENGTH = 5  # in 32-bit words, min length, no options
         version_and_ihl = (
-            (Ip4Packet.VERSION << 4) + Ip4Packet.HEADER_LENGTH
+            (Ip4Packet.VERSION << 4) + HEADER_LENGTH
         ).to_bytes()
         dscp_and_ecn = b"\0"  # not real time and demo world has no congestion
-        total_length = (len(data) + Ip4Packet.HEADER_LENGTH).to_btyes(2)
+        total_length = (len(data) + HEADER_LENGTH).to_btyes(2)
         id = random.randbytes(2)
         flags_and_frag_offset = (2 << 13).to_bytes(2)  # no fragmentation
         ttl = random.randbytes(1)
@@ -89,7 +89,7 @@ class Ip4Packet:
         )
         checksum = Ip4Packet.calc_checksum(header)
         header = (
-            header[:(Ip4Packet.HEADER_LENGTH * 32 // 8) - 10]
+            header[:(HEADER_LENGTH * 32 // 8) - 10]
             + checksum
             + src_ip.to_bytes()
             + dst_ip.to_bytes()
