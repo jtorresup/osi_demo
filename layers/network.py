@@ -7,7 +7,7 @@ from enum import IntEnum
 from typing import Dict, List
 
 import layer_log as log
-from common import chunks, Ip4Addr, Mac
+from common import calc_checksum, Ip4Addr, Mac
 
 
 NAME = "network"
@@ -87,25 +87,14 @@ class Ip4Packet:
             + src_ip.to_bytes()
             + dst_ip.to_bytes()
         )
-        checksum = Ip4Packet.calc_checksum(header)
         header = (
             header[:(HEADER_LENGTH * 32 // 8) - 10]
-            + checksum
+            + calc_checksum(header)
             + src_ip.to_bytes()
             + dst_ip.to_bytes()
         )
 
         return Ip4Packet(header + data)
-
-    @staticmethod
-    def calc_checksum(header: bytes) -> bytes:
-        checksum = 0
-        for ith in range(0, len(header) // 2, 2):
-            checksum += int.from_bytes(header[ith:ith + 2])
-        if checksum.bit_length() > 16:
-            checksum += checksum >> 16
-
-        return checksum
 
     def to_bytes(self) -> bytes:
         return self.inner

@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import math
 import random
-from itertools import zip_longest
-from typing import Iterable, Iterator, TypeVar
+from typing import TypeVar
 
 
 T = TypeVar("T")
@@ -78,13 +76,11 @@ class Ip4Addr:
         return addr
 
 
-def int_to_bytes(n: int, *args, **kwargs) -> bytes:
-    bitlen = math.ceil(n.bit_length() / 8)
+def calc_checksum(header: bytes) -> bytes:
+    checksum = 0
+    for ith in range(0, len(header) // 2, 2):
+        checksum += int.from_bytes(header[ith:ith + 2])
+    if checksum.bit_length() > 16:
+        checksum += checksum >> 16
 
-    return n.to_bytes(bitlen, *args, **kwargs)
-
-
-def chunks(iterable: Iterable[T], n: int) -> Iterator[T]:
-    iters = [iter(iterable)] * n
-
-    return zip_longest(*iters)
+    return checksum.to_bytes(2)
