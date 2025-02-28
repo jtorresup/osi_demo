@@ -1,9 +1,19 @@
+from __future__ import annotations
+
 import math
 import random
+from typing import Iterable, Iterator, TypeVar
+
+
+T = TypeVar("T")
 
 
 type Bit = int
 type Port = int
+
+
+class NotEnoughBytes(Exception):
+    pass
 
 
 class Mac:
@@ -35,8 +45,24 @@ class Ip4Addr:
             + self.d.to_bytes()
         )
 
+    @staticmethod
+    def from_bytes(raw: bytes) -> Ip4Addr:
+        addr = Ip4Addr()
+        addr.a = raw[0]
+        addr.b = raw[1]
+        addr.c = raw[2]
+        addr.d = raw[3]
+
+        return addr
+
 
 def int_to_bytes(n: int, *args, **kwargs) -> bytes:
     bitlen = math.ceil(n.bit_length() / 8)
 
     return n.to_bytes(bitlen, *args, **kwargs)
+
+
+def chunks(iterable: Iterable[T], n: int) -> Iterator[T]:
+    iters = [iter(iterable)] * n
+
+    return zip(iters)

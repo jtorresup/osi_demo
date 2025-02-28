@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import math
 from array import array
 from collections.abc import Callable
-from typing import Dict
+from typing import Dict, List
 
 import layer_log as log
-from common import Bit, Mac, Port
+from common import Bit, Mac, NotEnoughBytes, Port
 
 
 NAME = "datalink"
@@ -25,9 +26,6 @@ class Frame:
     """
     MAX_BYTE_SIZE = 268  # in bytes
     MAX_BODY_SIZE = 255  # in bytes
-
-    class NotEnoughBytes(Exception):
-        pass
 
     def __init__(self, inner: bytes):
         self.inner = inner
@@ -52,9 +50,9 @@ class Frame:
         return self.inner[13:len(self.inner) - self.padding]
 
     @staticmethod
-    def from_framebuffer(framebuffer: array) -> Frame:
+    def from_buffer(framebuffer: array) -> Frame:
         if len(framebuffer) < Frame.MAX_BYTE_SIZE * 8:
-            raise Frame.NotEnoughBytes()
+            raise NotEnoughBytes()
 
         frame = b""
         framebuffer.reverse()
@@ -69,11 +67,19 @@ class Frame:
         return Frame(frame)
 
     @staticmethod
-    def build(dst_mac: bytes, src_mac: bytes, data: bytes) -> Frame:
-        padding = Frame.MAX_BODY_SIZE - len(data)
-        data = data + (b"\0" * padding)
+    def build_all(dst_mac: bytes, src_mac: bytes, data: bytes) -> List[Frame]:
+        frames = []
 
-        return Frame(dst_mac + src_mac + data + padding)
+        frame_count = math.ceil(len(data) / Frame.MAX_BODY_SIZE)
+        for ith in range(frame_count):
+            ith = ith * Frame.MAX_BODY_SIZE
+            inner = data[ith:ith + Frame.MAX_BODY_SIZE]
+            log.debug(NAME, ith, ith + Frame.MAX_BODY_SIZE, len(inner))
+            padding = Frame.MAX_BODY_SIZE - len(inner)
+            inner = inner + (b"\0" * padding)
+            frames.append(Frame(dst_mac + src_mac + inner))
+
+        return frames
 
     def to_bytes(self) -> bytes:
         return self.inner
@@ -82,7 +88,7 @@ class Frame:
 class DataLinkLayer:
     def __init__(self):
         self.mac = Mac()
-        self.recv_framebuffer = array("B")
+        self.framebuffer = array("B")
         self.mac_table: Dict[Mac, Port] = {}
         log.info(NAME, "generated mac:", self.mac)
 
@@ -91,14 +97,14 @@ class DataLinkLayer:
         self.sender = sender
 
     def receive(self, port: Port, bit: Bit):
-        self.recv_framebuffer.append(bit)
+        self.framebuffer.append(bit)
 
         try:
-            frame = Frame.from_framebuffer(self.recv_framebuffer)
-        except Frame.NotEnoughBytes:
+            frame = Frame.from_buffer(self.framebuffer)
+        except NotEnoughBytes:
             return
 
-        self.recv_framebuffer.clear()
+        self.framebuffer.clear()
         log.info(NAME, "from mac:", frame.source_mac)
         log.info(NAME, "frame:", frame)
 
@@ -107,6 +113,8 @@ class DataLinkLayer:
 
     def send(self, mac: Mac, data: bytes):
         port = self.mac_table[mac]
-        framedata = Frame.build(mac, self.mac, data).to_bytes()
-        log.info(NAME, "sending frame:", framedata)
-        self.sender(port, framedata)
+        frames = Frame.build_all(mac, self.mac, data)
+
+        for frame in frames:
+            log.info(NAME, "sending frame:", frame.inner)
+            self.sender(port, frame.inner)
