@@ -83,7 +83,7 @@ class Ip4Packet:
         )
         checksum = Ip4Packet.calc_checksum(header)
         header = (
-            header[:(Ip4Packet.HEADER_LENGTH * 32 // 8) - 8]
+            header[:(Ip4Packet.HEADER_LENGTH * 32 // 8) - 10]
             + checksum
             + src_ip.to_bytes()
             + dst_ip.to_bytes()
