@@ -22,14 +22,6 @@ class ReceiveState(IntEnum):
     DATA = 1
 
 
-def calc_checksum(header: bytes) -> bytes:
-    chk = 0
-    for left, right in chunks(header, 2):
-        chk += ((left << 8) + right) ^ 0xffff
-
-    return (chk ^ 0xffff).to_bytes()
-
-
 class Ip4Packet:
     VERSION = 4
     MAX_DATA_SIZE = 65475  # in bytes
@@ -89,7 +81,7 @@ class Ip4Packet:
             + src_ip.to_bytes()
             + dst_ip.to_bytes()
         )
-        checksum = calc_checksum(header)
+        checksum = Ip4Packet.calc_checksum(header)
         header = (
             header[:Ip4Packet.HEADER_LENGTH - 8]
             + checksum
@@ -98,6 +90,14 @@ class Ip4Packet:
         )
 
         return Ip4Packet(header + data)
+
+    @staticmethod
+    def calc_checksum(header: bytes) -> bytes:
+        chk = 0
+        for left, right in chunks(header, 2):
+            chk += ((left << 8) + right) ^ 0xffff
+
+        return (chk ^ 0xffff).to_bytes()
 
     def to_bytes(self) -> bytes:
         return self.inner
@@ -124,16 +124,18 @@ class NetworkLayer:
                 log.info(NAME, "header has size:", self.packet_size)
                 if len(data) < (header_length * 32 // 8):
                     return
+
                 self.packet_size = int.from_bytes(self.packet_buffer[2:4])
-                log.info(NAME, "packet has size:", self.packet_size)
                 self.recv_state = ReceiveState.DATA
+                log.info(NAME, "packet has size:", self.packet_size)
 
             case ReceiveState.DATA:
                 packet = Ip4Packet(self.packet_buffer[:self.packet_size])
-                self.ip_table[packet.source_address] = src_mac
                 log.info(NAME, "packet from:", packet.source_address)
                 log.info(NAME, "packet:", packet)
+
                 self.recv_state = ReceiveState.HEADER
+                self.ip_table[packet.source_address] = src_mac
                 self.packet_buffer = self.packet_buffer[self.packet_size:]
                 self.receiver(packet.source_address, packet.data)
 

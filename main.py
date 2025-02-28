@@ -12,6 +12,7 @@ def main():
     datalink = DataLinkLayer()
     physical = PhysicalLayer()
 
+    transport.set_link(None, network.send)
     network.set_link(transport.receive, datalink.send)
     datalink.set_link(network.receive, physical.send)
     physical.run(("127.0.0.1", 5432), datalink.receive)
