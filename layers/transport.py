@@ -1,14 +1,14 @@
 from collections.abc import Callable
 
 import layer_log as log
-from common import Ip4Addr
+from common import Ip4Addr, IpPort
 
 
 NAME = "transport"
 
 
 type TransportReceiverFn = Callable[[Ip4Addr, bytes], None]
-type TransportSenderFn = Callable[[Ip4Addr, bytes], None]
+type TransportSenderFn = Callable[[IpPort, bytes], None]
 
 
 class TransportLayer:

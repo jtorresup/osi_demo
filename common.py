@@ -11,6 +11,7 @@ T = TypeVar("T")
 
 type Bit = int
 type PhysicalPort = int
+type IpPort = int
 
 
 class NotEnoughBytes(Exception):

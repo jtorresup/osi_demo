@@ -39,8 +39,12 @@ class Ip4Packet:
         return Ip4Addr.from_bytes(self.inner[16:20])
 
     @property
+    def header_length(self) -> int:
+        return (self.inner[0] << 4) >> 4
+
+    @property
     def data(self) -> bytes:
-        return self.inner[self.HEADER_LENGTH:]
+        return self.inner[self.header_length:]
 
     @staticmethod
     def build_all(
@@ -146,5 +150,5 @@ class NetworkLayer:
         packets = Ip4Packet.build_all(ip, self.ip, data)
 
         for packet in packets:
-            log.info(NAME, "sending datagram:", packet)
+            log.info(NAME, "sending packet:", packet)
             self.sender(mac, packet.to_bytes())
