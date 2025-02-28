@@ -24,6 +24,9 @@ class Mac:
     def __repr__(self) -> str:
         return self.raw.hex(":")
 
+    def to_bytes(self) -> bytes:
+        return self.raw
+
 
 class Ip4Addr:
     def __init__(self):

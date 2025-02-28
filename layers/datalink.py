@@ -67,7 +67,7 @@ class Frame:
         return Frame(frame)
 
     @staticmethod
-    def build_all(dst_mac: bytes, src_mac: bytes, data: bytes) -> List[Frame]:
+    def build_all(dst_mac: Mac, src_mac: Mac, data: bytes) -> List[Frame]:
         frames = []
 
         frame_count = math.ceil(len(data) / Frame.MAX_BODY_SIZE)
@@ -76,7 +76,9 @@ class Frame:
             inner = data[ith:ith + Frame.MAX_BODY_SIZE]
             padding = Frame.MAX_BODY_SIZE - len(inner)
             inner = inner + (b"\0" * padding)
-            frames.append(Frame(dst_mac + src_mac + inner))
+            frames.append(Frame(
+                dst_mac.to_bytes() + src_mac.to_bytes() + inner
+            ))
 
         return frames
 
