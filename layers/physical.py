@@ -24,8 +24,7 @@ class PhysicalLayer:
             while True:
                 try:
                     conn, (_, port) = sock.accept()
-                    with conn:
-                        self.handle_connection(conn, port, receiver)
+                    self.handle_connection(conn, port, receiver)
                 except KeyboardInterrupt:
                     break
 
@@ -52,4 +51,5 @@ class PhysicalLayer:
         try:
             conn.sendall(data)
         except ConnectionRefusedError:
+            conn.close()
             del self.port_table[port]

@@ -124,26 +124,25 @@ class NetworkLayer:
     def receive(self, src_mac: Mac, data: bytes):
         self.packet_buffer += data
 
-        match self.recv_state:
-            case ReceiveState.HEADER:
-                header_length = (self.packet_buffer[0] << 4) >> 4
-                log.info(NAME, "header has size:", header_length)
-                if len(data) < (header_length * 32 // 8):
-                    return
+        if self.recv_state == ReceiveState.HEADER:
+            header_length = (self.packet_buffer[0] << 4) >> 4
+            log.info(NAME, "header has size:", header_length)
+            if len(data) < (header_length * 32 // 8):
+                return
 
-                self.packet_size = int.from_bytes(self.packet_buffer[2:4])
-                self.recv_state = ReceiveState.DATA
-                log.info(NAME, "packet has size:", self.packet_size)
+            self.packet_size = int.from_bytes(self.packet_buffer[2:4])
+            self.recv_state = ReceiveState.DATA
+            log.info(NAME, "packet has size:", self.packet_size)
 
-            case ReceiveState.DATA:
-                packet = Ip4Packet(self.packet_buffer[:self.packet_size])
-                log.info(NAME, "packet from:", packet.source_address)
-                log.info(NAME, "packet:", packet)
+        if self.recv_state == ReceiveState.DATA:
+            packet = Ip4Packet(self.packet_buffer[:self.packet_size])
+            log.info(NAME, "packet from:", packet.source_address)
+            log.info(NAME, "packet:", packet)
 
-                self.recv_state = ReceiveState.HEADER
-                self.ip_table[packet.source_address] = src_mac
-                self.packet_buffer = self.packet_buffer[self.packet_size:]
-                self.receiver(packet.source_address, packet.data)
+            self.recv_state = ReceiveState.HEADER
+            self.ip_table[packet.source_address] = src_mac
+            self.packet_buffer = self.packet_buffer[self.packet_size:]
+            self.receiver(packet.source_address, packet.data)
 
     def send(self, ip: Ip4Addr, data: bytes):
         mac = self.ip_table[ip]
