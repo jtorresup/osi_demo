@@ -99,11 +99,13 @@ class Ip4Packet:
 
     @staticmethod
     def calc_checksum(header: bytes) -> bytes:
-        chk = 0
-        for left, right in chunks(header, 2):
-            chk += ((left << 8) + right) ^ 0xffff
+        checksum = 0
+        for ith in range(0, len(header) // 2, 2):
+            checksum += int.from_bytes(header[ith:ith + 2])
+        if checksum.bit_length() > 16:
+            checksum += checksum >> 16
 
-        return (chk ^ 0xffff).to_bytes()
+        return checksum
 
     def to_bytes(self) -> bytes:
         return self.inner

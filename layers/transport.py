@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 from collections.abc import Callable
 from enum import IntEnum
 from typing import Dict
@@ -29,9 +30,22 @@ class TcpSegment:
     def build_one(
         dst_port: IpPort,
         src_port: IpPort,
+        seq: int,
+        ack: int,
+        is_ack: bool,
+        is_syn: bool,
+        is_fin: bool,
         data: bytes,
     ) -> TcpSegment:
-        pass
+        header = (
+            src_port.to_bytes()
+            + dst_port.to_bytes()
+            + seq.to_bytes(4)
+            + ack.to_bytes(4)
+            + b"\50"  # data offset and reserved, no options
+            + (is_ack << 4) + (is_syn << 1) + is_fin
+            + random.randbytes(2)
+        )
 
 
 class TransportLayer:
